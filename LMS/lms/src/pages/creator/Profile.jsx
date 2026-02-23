@@ -1,0 +1,64 @@
+﻿import { useEffect, useState } from 'react'
+import { useAuth } from '../../context/AuthContext'
+import { getCreatorProfile, updateCreatorProfile } from '../../services/creatorApi'
+
+const Profile = () => {
+  const { user, login } = useAuth()
+  const [editing, setEditing] = useState(false)
+  const [profile, setProfile] = useState({ name: '', email: '', avatar: '' })
+
+  useEffect(() => {
+    const load = async () => {
+      const data = await getCreatorProfile()
+      setProfile(data)
+    }
+
+    load()
+  }, [])
+
+  return (
+    <div className="page">
+      <div>
+        <h1 className="page-title">Profile</h1>
+        <p className="page-subtitle">Manage your creator identity</p>
+      </div>
+
+      <div className="card max-w-xl space-y-4">
+        <div className="flex items-center gap-4">
+          <img src={profile.avatar || user?.avatar || 'https://i.pravatar.cc/120?img=47'} alt="creator" className="h-20 w-20 rounded-2xl object-cover" />
+          <div>
+            <p className="font-display text-xl">{profile.name}</p>
+            <p className="text-sm text-slate-500">{profile.email}</p>
+          </div>
+        </div>
+
+        {editing ? (
+          <div className="space-y-3">
+            <input className="input-base" value={profile.name} onChange={e => setProfile(prev => ({ ...prev, name: e.target.value }))} />
+            <input className="input-base" value={profile.email} onChange={e => setProfile(prev => ({ ...prev, email: e.target.value }))} />
+            <input className="input-base" value={profile.avatar} onChange={e => setProfile(prev => ({ ...prev, avatar: e.target.value }))} placeholder="Avatar URL" />
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={async () => {
+                  const updated = await updateCreatorProfile(profile)
+                  login({ role: 'creator', name: updated.name, email: updated.email, avatar: updated.avatar })
+                  setEditing(false)
+                }}
+              >
+                Save
+              </button>
+              <button type="button" className="btn-secondary" onClick={() => setEditing(false)}>Cancel</button>
+            </div>
+          </div>
+        ) : (
+          <button type="button" className="btn-secondary" onClick={() => setEditing(true)}>Edit Profile</button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default Profile
